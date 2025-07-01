@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: starlink_parks
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./starlink-parks-api/db/init_starlink_parks.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./starlink-parks-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: starlink_parks
+      DB_PORT: 5432
+    ports:
+      - "3005:3000"
+    volumes:
+      - ./starlink-parks-api:/app
+    command: ["node", "src/index.js"] # elimina wait-for.sh si lo tenías
+
+  frontend:
+    build:
+      context: ./el-salvador-dashboard1
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3000
+    ports:
+      - "3004:3000"
+    volumes:
+      - ./el-salvador-dashboard1:/app
+    command: ["npm", "start"]

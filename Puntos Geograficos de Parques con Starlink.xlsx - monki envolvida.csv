@@ -1,0 +1,78 @@
+id,Sitio,Departamento,Municipio,Distrito,Latitud,Longitud
+1,Parque Boqueron,La Libertad,La Libertad Sur,Santa Tecla,13.734527582506324, -89.2794292731072
+2,Parque Central de Anamorós,La Union,La Unión Norte,Anamorós,13.741601459096485, -87.87096102225175
+3,Parque Central de Coatepeque,Santa Ana,Santa Ana Este,Coatepeque,13.925164482819559, -89.5044506009578
+4,Parque Central de Ilobasco,Cabañas,Cabañas Oeste,Ilobasco,13.842666124116896, -88.85002298166214
+5,Parque Central de La Unión,La Unión,La Unión Sur,La Unión,13.337398023817013, -87.84320008196714
+6,Parque Central de Pasaquina,La Union,La Unión Norte,Pasaquina,13.584384440227993, -87.83795440090189
+7,Parque Central de San Pedro Puxtla,Ahuachapan,Ahuachapán Sur,San Pedro Puxtla,13.772924157452971, -89.80783570377025
+8,Parque Central de Sociedad,Morazán,Morazán Sur,Sociedad,13.698256547444565, -88.00731266559234
+9,Parque Central de Usulután,Usulután,Usulután Este,Usulután,13.345421880447516, -88.43983876986013
+10,Parque Central de Zacatecoluca,La Paz,La Paz Este,Zacatecoluca,13.509115004310745, -88.87062473208401
+11,Parque Central El Paraiso,Chalatenango,Chalatenango Centro,El Paraíso,14.106367253332529, -89.06887850504116
+12,Parque Centroamerica,La Libertad,La Libertad Costa,La Libertad,13.488039724843661, -89.32035101058683
+13,Parque Cinquera,Cabañas,Cabañas Oeste,Cinquera,13.888279369958612, -88.95898199077973
+14,Parque Corinto,Morazan,Morazán Norte,Corinto,13.808770584691676, -87.96961136183404
+15,Parque Cuisnahuat,Sonsonate,Sonsonate Este,Cuisnahuat,13.63847998149398, -89.60423940432568
+16,Parque de Apastepeque,San Vicente,San Vicente Norte,Apastepeque,13.667745795753005, -88.78038221266156
+17,Parque de Atiquizaya,Ahuachapan,Ahuachapán Norte,Atiquizaya,13.976624487250307, -89.75635848412153
+18,Parque de Ciudad Arce,La Libertad,La Libertad Centro,Ciudad Arce,13.83818993374459, -89.44502275697941
+19,Parque de Ciudad Dolores,Cabañas,Cabañas Este,Dolores,13.777918823647923, -88.5661225661547
+20,Parque de Cojutepeque,Cuscatlán,Cuscatlán Sur,Cojutepeque,13.721793028225836, -88.9345254583002
+21,Parque de Comasagua,La Libertad,La Libertad Sur,Comasagua,13.637988121420117, -89.37699450184907
+22,Parque de Conchagua,La Union,La Unión Sur,Conchagua,13.3072994856774, -87.86292895309042
+23,Parque de El Refugio,Ahuachapan,Ahuachapán Norte,El Refugio,13.974924532719502, -89.70562044907545
+24,Parque de Guacotecti,Cabañas,Cabañas Este,Guacotecti,13.874128666089689, -88.64512171200207
+25,Parque de Huizucar,La Libertad,La Libertad Este,Huizúcar,13.58739222498044, -89.23579662249087
+26,Parque de Nahulingo,Sonsonate,Sonsonate Centro,Nahulingo,13.704245862188177, -89.71532589686383
+27,Parque de Panchimalco,San Salvador,San Salvador Sur,Panchimalco,13.611474594749689, -89.17950119168214
+28,Parque de San Antonio del Monte,Sonsonate,Sonsonate Centro,San Antonio del Monte,13.718983101590059, -89.73884536779785
+29,Parque de San Ildelfonso,San Vicente,San Vicente Norte,San Ildefonso,13.706297171845726, -88.55964440724267
+30,Parque de San Isidro,Cabañas,Cabañas Este,San Isidro,14.009436057848745, -88.84359214589381
+31,Parque de San Juan Nonualco,La Paz,La Paz Este,San Juan Nonualco,13.505726269559842, -88.89798587419277
+32,Parque de San Lorenzo sv,San Vicente,San Vicente Norte,San Lorenzo,13.705228261214986, -88.80479321971349
+33,Parque de San Lorenzon ah,Ahuachapan,Ahuachapán Norte,San Lorenzo,14.026945237675625, -89.78363558692938
+34,Parque de San Luis Talpa,La Paz,La Paz Oeste,San Luis Talpa,13.471125975275221, -89.08863832896768
+35,Parque de San Pedro Nonualco,La Paz,La Paz Centro,San Pedro Nonualco,13.603232221680145, -88.92617289087296
+36,Parque de San Rafael Obrajuelo,La Paz,La Paz Este,San Rafael Obrajuelo,13.50194640897329, -88.92405234292853
+37,Parque de San Sebastián,San Vicente,San Vicente Norte,San Sebastián,13.723126518980298, -88.81404189739996
+38,Parque de Santa María Ostuma,La Paz,La Paz Centro,Santa María Ostuma,13.61908725070788, -88.93099958012684
+39,Parque de Santiago Nonualco,La Paz,La Paz Centro,Santiago Nonualco,13.512718916223669, -88.93948876577288
+40,Parque de Santo Domingo de Guzmán,Sonsonate,Sonsonate Centro,Santo Domingo de Guzmán,13.717328138683017, -89.79766952549978
+41,Parque de Sensuntepeque,Cabañas,Cabañas Este,Sensuntepeque,13.876376488736701, -88.6269964691727
+42,Parque de Sonzacate,Sonsonate,Sonsonate Centro,Sonzacate,13.735913277009654, -89.71578603567772
+43,Parque El Principito,La Libertad,La Libertad Sur,Santa Tecla,13.683734074893865, -89.26366440994214
+44,Parque Guaymango,Ahuachapan,Ahuachapán Sur,Guaymango,13.749550154651379, -89.84554368596498
+45,Parque Jutiapa,Cabañas,Cabañas Oeste,Jutiapa,13.888321762575316, -88.90107154565456
+46,Parque La Concordia,Ahuachapan,Ahuachapán Centro,Ahuachapán,13.919192238119999, -89.84888477936019
+47,Parque La Palma,Chalatenango,Chalatenango Norte,La Palma,14.317138056788657, -89.1706740705099
+48,Parque Lislique,La Union,La Unión Norte,Lislique,13.802966585860034, -87.89736098898041
+49,Parque Lolotique,San Miguel,San Miguel Oeste,Lolotique,13.555247941920042, -88.35101609505787
+50,Parque Nahuizalco,Sonsonate,Sonsonate Norte,Nahuizalco,13.78116332631014, -89.73755351781635
+51,Parque Rafael Campos,Sonsonate,Sonsonate Centro,Sonsonate,13.721023579990327, -89.72787461729837
+52,Parque San Alejo,La Union,La Unión Sur,San Alejo,13.431730001570406, -87.9610075167737
+53,Parque San Gerardo,San Miguel,San Miguel Norte,San Gerardo,13.80925210708523, -88.40745878655693
+54,Parque San Juan,Ahuachapán,Ahuachapán Norte,Atiquizaya,13.974276590058293, -89.75506734664846
+55,Parque San Julian,Sonsonate,Sonsonate Este,San Julián,13.69769797565538, -89.55970310329229
+56,Parque San Martín,La Libertad,La Libertad Sur,Santa Tecla,13.673629720987233, -89.28525065488483
+57,Parque Santiago Apostol Chalchuapa,Santa Ana,Santa Ana Oeste,Chalchuapa,13.985864918707916, -89.68089906022038
+58,Parque Santiago de Maria,Usulutan,Usulután Norte,Santiago de María,13.482058192221334, -88.46621913944229
+59,Parque Suchitoto,Cuscatlán,Cuscatlán Norte,Suchitoto,13.936744475054033, -89.0258155032746
+60,Parque Tamanique,La Libertad,La Libertad Costa,Tamanique,13.597813482243039, -89.41839966040256
+61,Parque Tazumal,Santa Ana,Santa Ana Oeste,Chalchuapa,13.979714986865597, -89.67418719295813
+62,Parque Tejutepeque,Cabañas,Cabañas Oeste,Tejutepeque,13.8530900602089, -88.9036576756889
+63,Parque Torola,Morazán,Morazán Norte,Torola,13.915097350293776, -88.23400311594202
+64,Parque Victoria,Cabañas,Cabañas Este,Victoria,13.951619712571674, -88.63891657084194
+65,Plaza Barrios,San Salvador,San Salvador Centro,San Salvador,13.697624304981588, -89.1911582234833
+66,Plaza Libertad,San Salvador,San Salvador Centro,San Salvador,13.697487864969986, -89.18937920606885
+67,Plaza Morazan,San Salvador,San Salvador Centro,San Salvador,13.699375479484631, -89.19036045673155
+68,Plaza Salvador Del Mundo,San Salvador,San Salvador Centro,San Salvador,13.701597295545339, -89.22439060542455
+69,Sunset Park,La Libertad,La Libertad Costa,La Libertad,13.487185079311956, -89.32094946922108
+70,Teatro Nacional,San Salvador,San Salvador Centro,San Salvador,13.698699233337917, -89.19039605119356
+71,Parque Sacacoyo,La Libertad,La Libertad Oeste,Sacacoyo,13.736085,-89.4710553
+72,Parque Santa Rosa de Lima,La Union,La Union Norte,Santa Rosa de Lima,13.6256774,-87.891107
+73,Parque de Zaragoza,La Libertad,La Libertad Este,Zaragoza,13.58848092215528, -89.28848500481855
+74,Parque de San Jose Villanueva,La Libertad,La Libertad Este,San Jose Villa Nueva,3.5769211,-89.2644749
+75,Parque de Nuevo Cuscatlan,La Libertad,La Libertad Este,Nuevo Cuscatlán,13.6478774,-89.2651523
+76,Parque de Lolotiquillo,Morazan,Morazan Sur,Lolotiquillo,13.7266649,-88.0916751
+77,Parque de Guatajiagua,Morazan,Morazan Sur,Guatajiagua,13.66614, -88.208938
