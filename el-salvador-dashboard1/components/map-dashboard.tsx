@@ -36,10 +36,36 @@ export type Site = {
   coordenadas: [number, number]
   url: string
   ip: string
-  status: number
+  status: number // For backward compatibility
   apiStatus: "UP" | "PENDING" | "DOWN"
   responseTime: number | null
 }
+
+const normalizeDepartment = (input: string): string => {
+  const normalized = input.trim().toLowerCase();
+  const map: Record<string, string> = {
+    "ahuachapan": "Ahuachapán",
+    "ahuachapán": "Ahuachapán",
+    "santa ana": "Santa Ana",
+    "sonsonate": "Sonsonate",
+    "chalatenango": "Chalatenango",
+    "la libertad": "La Libertad",
+    "san salvador": "San Salvador",
+    "cuscatlan": "Cuscatlán",
+    "cuscatlán": "Cuscatlán",
+    "la paz": "La Paz",
+    "cabañas": "Cabañas",
+    "san vicente": "San Vicente",
+    "usulutan": "Usulután",
+    "usulután": "Usulután",
+    "san miguel": "San Miguel",
+    "morazan": "Morazán",
+    "morazán": "Morazán",
+    "la union": "La Unión",
+    "la unión": "La Unión",
+  };
+  return map[normalized] || input;
+};
 
 export function MapDashboard() {
   const [sites, setSites] = useState<Site[]>([])
@@ -59,10 +85,13 @@ export function MapDashboard() {
   const [usingMockData, setUsingMockData] = useState(false)
   const [apiConnected, setApiConnected] = useState(false)
 
-  const selectedDepartmentsRef = useRef<string[]>([]);
+  // Inicializar los refs con null o un valor por defecto simple
+  const selectedDepartmentsRef = useRef<string[]>([]); // Inicializar con un array vacío, no el estado
   const statusFilterRef = useRef<string | null>(null);
   const searchQueryRef = useRef<string>("");
-  const loadDataRef = useRef<(() => Promise<void>) | null>(null); 
+  const loadDataRef = useRef<(() => Promise<void>) | null>(null); // Inicializar con null
+
+  // Actualizar los refs cuando los estados cambian (esto se ejecuta en el cliente después de SSR)
   useEffect(() => {
     selectedDepartmentsRef.current = selectedDepartments;
   }, [selectedDepartments]);
@@ -78,6 +107,7 @@ export function MapDashboard() {
 
   // --- Funciones de Filtrado ---
   const applyFilters = useCallback((allSites: Site[]) => {
+    // Accede a los valores actuales a través de .current
     const currentDepartments = selectedDepartmentsRef.current;
     const currentStatus = statusFilterRef.current;
     const currentQuery = searchQueryRef.current;
@@ -104,9 +134,9 @@ export function MapDashboard() {
     }
 
     setFilteredSites(filtered);
-  }, [departments]); 
+  }, [departments]); // 'departments' es una dependencia válida aquí.
 
-  // removeAlert
+  // removeAlert se define aquí para que esté disponible dentro de loadData si se usa un callback de setAlerts
   const removeAlert = useCallback((site: Site) => {
     setAlerts((prev) => prev.filter((alert) => alert.id !== site.id));
   }, []);
@@ -132,7 +162,7 @@ export function MapDashboard() {
       const fetchedSites: Site[] = apiData.map((apiSite: any) => ({
         id: apiSite.id,
         sitio: apiSite.sitio,
-        departamento: apiSite.departamento,
+        departamento: normalizeDepartment(apiSite.departamento),
         municipio: apiSite.municipio,
         distrito: apiSite.distrito,
         coordenadas: [Number.parseFloat(apiSite.latitud), Number.parseFloat(apiSite.longitud)] as [number, number],
@@ -195,31 +225,32 @@ export function MapDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [retryCount]); 
+  }, [retryCount]);
   useEffect(() => {
     loadDataRef.current = loadData;
   }, [loadData]);
 
 
-  // Initial data load (and on retry)
   useEffect(() => {
     if (loadDataRef.current) {
       loadDataRef.current();
     }
-  }, [loadData, retryCount]);
+  }, [loadData, retryCount]); // `loadData` y `retryCount` son dependencias aquí
 
 
   // Set up monitoring interval (Polling)
+  // Este useEffect solo se configura una vez al montar el componente.
   useEffect(() => {
     const pollingInterval = setInterval(() => {
       console.log("Polling for site data updates...");
+      // Asegurarse de que loadDataRef.current no sea null antes de llamarlo
       if (loadDataRef.current) {
         loadDataRef.current();
       }
-    }, 180000); // Poll every 3 minutes (180000 ms)
+    }, 180000); // 180000 ms = 3 minutes
 
     return () => clearInterval(pollingInterval);
-  }, []);
+  }, []); // Array de dependencias vacío para que se ejecute solo una vez.
 
 
   // Apply filters when filter criteria change OR when sites data changes
@@ -243,6 +274,9 @@ export function MapDashboard() {
     setSelectedDepartments([]);
   };
 
+  // removeAlert ya definido arriba con useCallback
+
+
   const handleAlertClick = (site: Site) => {
     setSelectedSite(site);
     setIsModalOpen(true);
@@ -253,6 +287,7 @@ export function MapDashboard() {
   };
 
   const handleRefresh = async () => {
+    // Usar loadDataRef.current para el refresh manual también
     if (loadDataRef.current) {
       await loadDataRef.current();
     }
@@ -343,6 +378,7 @@ export function MapDashboard() {
                 setSelectedSite(site);
                 setIsModalOpen(true);
               }}
+              className="mt-60 px-4"
             />
           )}
 
@@ -378,7 +414,7 @@ export function MapDashboard() {
                   <MapIcon className="h-4 w-4" />
                   <span className="sr-only">Map View</span>
                 </Button>
-                <Button
+                {/* <Button
                   variant={viewMode === "list" ? "default" : "outline"}
                   size="icon"
                   className="h-8 w-8"
@@ -386,7 +422,7 @@ export function MapDashboard() {
                 >
                   <List className="h-4 w-4" />
                   <span className="sr-only">List View</span>
-                </Button>
+                </Button> */}
               </div>
             </div>
 
@@ -411,10 +447,10 @@ export function MapDashboard() {
 
             <div className="text-xs text-gray-500 mt-1">
               <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Avg Response: {avgResponseTime > 0 ? `${Math.round(avgResponseTime)}ms` : "N/A"}
+                {/* <Clock className="h-3 w-3" />
+                Avg Response: {avgResponseTime > 0 ? `${Math.round(avgResponseTime)}ms` : "N/A"} */}
               </div>
-              <div>Data Source: {usingMockData ? "Mock Data" : "API"}</div>
+              <div>Data Source: {usingMockData ? "Mock Data" : "API - Monitoreo"}</div>
               <div>Last updated: {lastUpdated.toLocaleTimeString()}</div>
             </div>
 
@@ -447,7 +483,10 @@ export function MapDashboard() {
                     Departments ({selectedDepartments.length}/{departments.length})
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 max-h-[300px] overflow-y-auto">
+                <DropdownMenuContent
+                  sideOffset={8}
+                  className="w-56 max-h-[300px] overflow-y-auto z-50 bg-white shadow-md border rounded-md"
+                >
                   <DropdownMenuCheckboxItem
                     checked={selectedDepartments.length === departments.length}
                     onCheckedChange={selectAllDepartments}
@@ -480,7 +519,10 @@ export function MapDashboard() {
                     Status ({statusFilter || "All"})
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent
+                  sideOffset={8}
+                  className="w-56 z-50 bg-white shadow-md border rounded-md"
+                >
                   <DropdownMenuCheckboxItem
                     checked={statusFilter === null}
                     onCheckedChange={() => setStatusFilter(null)}
@@ -508,6 +550,7 @@ export function MapDashboard() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
           </div>
 
           <div className="absolute top-4 right-4 flex flex-col gap-2 max-w-md z-[1000]">

@@ -72,7 +72,7 @@ export default function Map({ sites, onMarkerClick }: MapProps) {
   }
 
   return (
-    <MapContainer center={elSalvadorCenter} zoom={10} style={{ height: "100%", width: "100%" }} zoomControl={false}>
+    <MapContainer center={elSalvadorCenter} zoom={10} className="w-full h-full z-0" zoomControl={false}>
       <ZoomControl position="bottomright" />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -53,8 +53,47 @@ CREATE INDEX IF NOT EXISTS idx_logs_site_id ON site_logs (site_id);
 CREATE INDEX IF NOT EXISTS idx_logs_user_id ON site_logs (user_id);
 
 -- ====================
--- Usuario admin inicial (opcional)
+-- Usuario admin1/admin1 inicial (opcional)
 -- Reemplaza el password_hash generado por bcrypt
 -- ====================
 INSERT INTO users (username, password_hash, nombre, role)
 VALUES ('admin1', '$2a$12$8L9nlYlgQ4pTGHoG8GFNVeBPBOC6O0ktqkamEFUPnHrOdmARU7SqS', 'Administrador', 'admin');
+
+-- ====================
+-- Función de normalización
+-- ====================
+CREATE OR REPLACE FUNCTION normalizar_departamento()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.departamento := CASE
+    WHEN LOWER(TRIM(NEW.departamento)) IN ('ahuachapan', 'ahuachapán') THEN 'Ahuachapán'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'santa ana' THEN 'Santa Ana'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'sonsonate' THEN 'Sonsonate'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'chalatenango' THEN 'Chalatenango'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'la libertad' THEN 'La Libertad'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'san salvador' THEN 'San Salvador'
+    WHEN LOWER(TRIM(NEW.departamento)) IN ('cuscatlan', 'cuscatlán') THEN 'Cuscatlán'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'la paz' THEN 'La Paz'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'cabañas' THEN 'Cabañas'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'san vicente' THEN 'San Vicente'
+    WHEN LOWER(TRIM(NEW.departamento)) IN ('usulutan', 'usulután') THEN 'Usulután'
+    WHEN LOWER(TRIM(NEW.departamento)) = 'san miguel' THEN 'San Miguel'
+    WHEN LOWER(TRIM(NEW.departamento)) IN ('morazan', 'morazán') THEN 'Morazán'
+    WHEN LOWER(TRIM(NEW.departamento)) IN ('la union', 'la unión') THEN 'La Unión'
+    ELSE TRIM(NEW.departamento)
+  END;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+ -- ====================
+-- Trigger para normalizar el campo departamento
+-- ====================
+
+DROP TRIGGER IF EXISTS trigger_normalizar_departamento ON public.sites;
+DROP FUNCTION IF EXISTS normalizar_departamento();
+CREATE TRIGGER trigger_normalizar_departamento
+BEFORE INSERT OR UPDATE ON public.sites
+FOR EACH ROW
+EXECUTE FUNCTION normalizar_departamento();

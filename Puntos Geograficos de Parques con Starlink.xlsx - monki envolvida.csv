@@ -5,7 +5,7 @@ id,Sitio,Departamento,Municipio,Distrito,Latitud,Longitud
 4,Parque Central de Ilobasco,Cabañas,Cabañas Oeste,Ilobasco,13.842666124116896, -88.85002298166214
 5,Parque Central de La Unión,La Unión,La Unión Sur,La Unión,13.337398023817013, -87.84320008196714
 6,Parque Central de Pasaquina,La Union,La Unión Norte,Pasaquina,13.584384440227993, -87.83795440090189
-7,Parque Central de San Pedro Puxtla,Ahuachapan,Ahuachapán Sur,San Pedro Puxtla,13.772924157452971, -89.80783570377025
+7,Parque Central de San Pedro Puxtla,Ahuachapan,Ahuachapán Sur,San Pedro Puxtla,13.772924157452971, -89.80783570377025
 8,Parque Central de Sociedad,Morazán,Morazán Sur,Sociedad,13.698256547444565, -88.00731266559234
 9,Parque Central de Usulután,Usulután,Usulután Este,Usulután,13.345421880447516, -88.43983876986013
 10,Parque Central de Zacatecoluca,La Paz,La Paz Este,Zacatecoluca,13.509115004310745, -88.87062473208401
@@ -72,7 +72,7 @@ id,Sitio,Departamento,Municipio,Distrito,Latitud,Longitud
 71,Parque Sacacoyo,La Libertad,La Libertad Oeste,Sacacoyo,13.736085,-89.4710553
 72,Parque Santa Rosa de Lima,La Union,La Union Norte,Santa Rosa de Lima,13.6256774,-87.891107
 73,Parque de Zaragoza,La Libertad,La Libertad Este,Zaragoza,13.58848092215528, -89.28848500481855
-74,Parque de San Jose Villanueva,La Libertad,La Libertad Este,San Jose Villa Nueva,3.5769211,-89.2644749
+74,Parque de San Jose Villanueva,La Libertad,La Libertad Este,San Jose Villa Nueva,13.5774801, -89.2638456
 75,Parque de Nuevo Cuscatlan,La Libertad,La Libertad Este,Nuevo Cuscatlán,13.6478774,-89.2651523
 76,Parque de Lolotiquillo,Morazan,Morazan Sur,Lolotiquillo,13.7266649,-88.0916751
 77,Parque de Guatajiagua,Morazan,Morazan Sur,Guatajiagua,13.66614, -88.208938
