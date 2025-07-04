@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import dynamic from "next/dynamic"
 import { AlertCircle, X, Filter, Search, List, MapIcon, RefreshCw, Download, Clock, Wifi, WifiOff } from "lucide-react"
 
@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input"
 import { SitesList } from "@/components/sites-list"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-// Import Map component dynamically to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("@/components/map"), {
   ssr: false,
   loading: () => (
@@ -37,7 +36,7 @@ export type Site = {
   coordenadas: [number, number]
   url: string
   ip: string
-  status: number // For backward compatibility
+  status: number
   apiStatus: "UP" | "PENDING" | "DOWN"
   responseTime: number | null
 }
@@ -60,248 +59,206 @@ export function MapDashboard() {
   const [usingMockData, setUsingMockData] = useState(false)
   const [apiConnected, setApiConnected] = useState(false)
 
-  // Load data function
+  const selectedDepartmentsRef = useRef<string[]>([]);
+  const statusFilterRef = useRef<string | null>(null);
+  const searchQueryRef = useRef<string>("");
+  const loadDataRef = useRef<(() => Promise<void>) | null>(null); 
+  useEffect(() => {
+    selectedDepartmentsRef.current = selectedDepartments;
+  }, [selectedDepartments]);
+
+  useEffect(() => {
+    statusFilterRef.current = statusFilter;
+  }, [statusFilter]);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+
+  // --- Funciones de Filtrado ---
+  const applyFilters = useCallback((allSites: Site[]) => {
+    const currentDepartments = selectedDepartmentsRef.current;
+    const currentStatus = statusFilterRef.current;
+    const currentQuery = searchQueryRef.current;
+
+    let filtered = allSites;
+
+    if (currentDepartments.length > 0 && currentDepartments.length < departments.length) {
+      filtered = filtered.filter((site) => currentDepartments.includes(site.departamento));
+    }
+
+    if (currentStatus !== null) {
+      filtered = filtered.filter((site) => site.apiStatus === currentStatus);
+    }
+
+    if (currentQuery.trim() !== "") {
+      const searchLower = currentQuery.toLowerCase();
+      filtered = filtered.filter(
+        (site) =>
+          site.sitio.toLowerCase().includes(searchLower) ||
+          site.municipio.toLowerCase().includes(searchLower) ||
+          site.departamento.toLowerCase().includes(searchLower) ||
+          site.distrito.toLowerCase().includes(searchLower),
+      );
+    }
+
+    setFilteredSites(filtered);
+  }, [departments]); 
+
+  // removeAlert
+  const removeAlert = useCallback((site: Site) => {
+    setAlerts((prev) => prev.filter((alert) => alert.id !== site.id));
+  }, []);
+
   const loadData = useCallback(async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-      console.log("Loading data from API, attempt:", retryCount + 1)
+      setIsLoading(true);
+      setError(null);
+      console.log("Loading data from API, attempt:", retryCount + 1);
 
-      const response = await fetch("/api/sites")
-      const isMockData = response.headers.get("X-Data-Source") === "mock"
-      const errorReason = response.headers.get("X-Error-Reason")
+      const response = await fetch("/api/sites");
+      const isMockData = response.headers.get("X-Data-Source") === "mock";
+      const errorReason = response.headers.get("X-Error-Reason");
 
-      const apiData = await response.json()
+      const apiData = await response.json();
 
-      if (apiData.length === 0) {
-        setError("Down found from API")
-        return
+      if (apiData.length === 0 && !isMockData) {
+        setError("No data found from API. It might be down or return an empty response.");
+        setUsingMockData(false);
+        return;
       }
 
-      // Transform API response to our Site format
-      const sites: Site[] = apiData.map((apiSite: any) => ({
+      const fetchedSites: Site[] = apiData.map((apiSite: any) => ({
         id: apiSite.id,
         sitio: apiSite.sitio,
         departamento: apiSite.departamento,
         municipio: apiSite.municipio,
         distrito: apiSite.distrito,
         coordenadas: [Number.parseFloat(apiSite.latitud), Number.parseFloat(apiSite.longitud)] as [number, number],
-        url: "", // Not provided by API
-        ip: "", // Not provided by API
+        url: "",
+        ip: "",
         status: apiSite.status === "UP" ? 1 : apiSite.status === "PENDING" ? 0 : -1,
         apiStatus: apiSite.status,
         responseTime: apiSite.response_time,
-      }))
+      }));
 
-      // Filter out sites with invalid coordinates
-      const validSites = sites.filter((site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1]))
+      const validSites = fetchedSites.filter((site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1]));
 
-      console.log(`Loaded ${validSites.length} sites successfully`)
-      setSites(validSites)
-      setFilteredSites(validSites)
-      setLastUpdated(new Date())
-      setUsingMockData(isMockData)
-      setApiConnected(!isMockData)
+      console.log(`Loaded ${validSites.length} sites successfully`);
+      setSites(validSites);
+      setLastUpdated(new Date());
+      setUsingMockData(isMockData);
+      setApiConnected(!isMockData);
 
       if (isMockData && errorReason) {
-        console.warn("Using mock data due to:", errorReason)
+        console.warn("Using mock data due to:", errorReason);
       }
 
-      // Check for new down/Down sites for alerts
-      const problemSites = validSites.filter(
-        (site) =>
-          (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") &&
-          !alerts.some((alert) => alert.id === site.id),
-      )
+      // Check for new down/Pending sites for alerts
+      setAlerts((prevAlerts) => {
+        const newProblemSites = validSites.filter(
+          (site) => (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") && !prevAlerts.some((alert) => alert.id === site.id),
+        );
 
-      setAlerts((prev) => {
-        const unique = problemSites.filter(
-          (newAlert) => !prev.some((existing) => existing.id === newAlert.id)
-        )
+        if (newProblemSites.length > 0) {
+          newProblemSites.forEach((alertToAdd) => {
+            // Agregar la alerta y programar su eliminación
+            setTimeout(() => {
+              setAlerts((latestAlerts) => latestAlerts.filter((alert) => alert.id !== alertToAdd.id));
+            }, 5000);
+          });
+          // Retorna un nuevo array que incluye las alertas previas y las nuevas únicas
+          return [...prevAlerts, ...newProblemSites];
+        }
+        return prevAlerts; // Si no hay nuevas alertas, retorna el array sin cambios
+      });
 
-        unique.forEach((alert) => {
-          setTimeout(() => removeAlert(alert), 5000)
-        })
-
-        return [...prev, ...unique]
-      })
 
       // Extract unique departments for filtering
       const uniqueDepartments = Array.from(new Set(validSites.map((site) => site.departamento)))
         .filter(Boolean)
-        .sort()
-      setDepartments(uniqueDepartments)
-      setSelectedDepartments(uniqueDepartments) // Initially select all
-    } catch (error) {
-      console.error("Failed to load data:", error)
-      setError("Failed to load data from API. Check Docker container status.")
-      setUsingMockData(true)
-      setApiConnected(false)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [retryCount])
+        .sort();
+      setDepartments(uniqueDepartments);
 
-  // Initial data load
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
-
-  // Set up monitoring interval
-  useEffect(() => {
-    if (sites.length === 0) return
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch("/api/sites")
-        const isMockData = response.headers.get("X-Data-Source") === "mock"
-        const apiData = await response.json()
-
-        setLastUpdated(new Date())
-        setUsingMockData(isMockData)
-        setApiConnected(!isMockData)
-
-        const sites: Site[] = apiData.map((apiSite: any) => ({
-          id: apiSite.id,
-          sitio: apiSite.sitio,
-          departamento: apiSite.departamento,
-          municipio: apiSite.municipio,
-          distrito: apiSite.distrito,
-          coordenadas: [Number.parseFloat(apiSite.latitud), Number.parseFloat(apiSite.longitud)] as [number, number],
-          url: "",
-          ip: "",
-          status: apiSite.status === "UP" ? 1 : apiSite.status === "PENDING" ? 0 : -1,
-          apiStatus: apiSite.status,
-          responseTime: apiSite.response_time,
-        }))
-
-        const validSites = sites.filter((site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1]))
-
-        const newProblemSites = validSites.filter(
-          (site) =>
-            (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") &&
-            !alerts.some((alert) => alert.id === site.id),
-        )
-
-        if (newProblemSites.length > 0) {
-          setAlerts((prev) => {
-            const unique = newProblemSites.filter(
-              (newAlert) => !prev.some((existing) => existing.id === newAlert.id)
-            )
-            // Auto-remove cada nueva alerta después de 5 segundos
-            unique.forEach((alert) => {
-              setTimeout(() => removeAlert(alert), 5000)
-            })
-
-            return [...prev, ...unique]
-          })
-        }
-
-        setSites(validSites)
-        //applyFilters(validSites, selectedDepartments, statusFilter, searchQuery)
-      } catch (error) {
-        console.error("Error monitoring sites:", error)
-        setApiConnected(false)
+      // Solo establecer todos los departamentos inicialmente si NO se ha hecho ninguna selección previa
+      // Accede al ref para verificar la longitud actual de los departamentos seleccionados
+      if (selectedDepartmentsRef.current.length === 0 && uniqueDepartments.length > 0) {
+        setSelectedDepartments(uniqueDepartments);
       }
-    }, 300000) // cada 5 minutos
 
-    return () => clearInterval(interval)
-  }, [sites, alerts, selectedDepartments, statusFilter, searchQuery])
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      setError("Failed to load data from API. Check Docker container status or API route response.");
+      setUsingMockData(true);
+      setApiConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [retryCount]); 
+  useEffect(() => {
+    loadDataRef.current = loadData;
+  }, [loadData]);
 
 
-  // Apply filters when filter criteria change
-  // useEffect(() => {
-  //   applyFilters(sites, selectedDepartments, statusFilter, searchQuery)
-  // }, [sites, selectedDepartments, statusFilter, searchQuery])
+  // Initial data load (and on retry)
+  useEffect(() => {
+    if (loadDataRef.current) {
+      loadDataRef.current();
+    }
+  }, [loadData, retryCount]);
 
-  // // Apply filters to sites
-  // const applyFilters = (allSites: Site[], depts: string[], status: string | null, query: string) => {
-  //   let filtered = allSites
 
-  //   // Filter by department
-  //   if (depts.length > 0 && depts.length < departments.length) {
-  //     filtered = filtered.filter((site) => depts.includes(site.departamento))
-  //   }
+  // Set up monitoring interval (Polling)
+  useEffect(() => {
+    const pollingInterval = setInterval(() => {
+      console.log("Polling for site data updates...");
+      if (loadDataRef.current) {
+        loadDataRef.current();
+      }
+    }, 180000); // Poll every 3 minutes (180000 ms)
 
-  //   // Filter by status
-  //   if (status !== null) {
-  //     filtered = filtered.filter((site) => site.apiStatus === status)
-  //   }
+    return () => clearInterval(pollingInterval);
+  }, []);
 
-  //   // Filter by search query
-  //   if (query.trim() !== "") {
-  //     const searchLower = query.toLowerCase()
-  //     filtered = filtered.filter(
-  //       (site) =>
-  //         site.sitio.toLowerCase().includes(searchLower) ||
-  //         site.municipio.toLowerCase().includes(searchLower) ||
-  //         site.departamento.toLowerCase().includes(searchLower) ||
-  //         site.distrito.toLowerCase().includes(searchLower),
-  //     )
-  //   }
 
-  //   setFilteredSites(filtered)
-  // }
+  // Apply filters when filter criteria change OR when sites data changes
+  useEffect(() => {
+    applyFilters(sites);
+  }, [sites, selectedDepartments, statusFilter, searchQuery, applyFilters]);
 
-  // Toggle department selection
+
   const toggleDepartment = (dept: string) => {
     setSelectedDepartments((prev) => {
-      if (prev.includes(dept)) {
-        return prev.filter((d) => d !== dept)
-      } else {
-        return [...prev, dept]
-      }
-    })
-  }
+      const newSelection = prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept];
+      return newSelection;
+    });
+  };
 
-  // Select all departments
   const selectAllDepartments = () => {
-    setSelectedDepartments(departments)
-  }
+    setSelectedDepartments(departments);
+  };
 
-  // Clear all department selections
   const clearDepartmentSelection = () => {
-    setSelectedDepartments([])
-  }
-
-  // Remove alert after 30 seconds or when manually closed
-  const removeAlert = (site: Site) => {
-    setAlerts((prev) => prev.filter((alert) => alert.id !== site.id))
-  }
-
-  // Auto-remove alerts after 5 seconds
-  // useEffect(() => {
-  //   const timeouts = alerts.map((alert) => {
-  //     return setTimeout(() => {
-  //       removeAlert(alert)
-  //     }, 5000)
-  //   })
-
-  //   return () => {
-  //     timeouts.forEach((timeout) => clearTimeout(timeout))
-  //   }
-  // }, [alerts])
-
+    setSelectedDepartments([]);
+  };
 
   const handleAlertClick = (site: Site) => {
-    setSelectedSite(site)
-    setIsModalOpen(true)
-  }
+    setSelectedSite(site);
+    setIsModalOpen(true);
+  };
 
-  // Handle retry
   const handleRetry = () => {
-    setRetryCount((prev) => prev + 1)
-  }
+    setRetryCount((prev) => prev + 1);
+  };
 
-  // Manually refresh data
   const handleRefresh = async () => {
-    await loadData()
-  }
+    if (loadDataRef.current) {
+      await loadDataRef.current();
+    }
+  };
 
-  // Export data as CSV
-  const exportData = () => {
-    // Create CSV content
+  const exportData = useCallback(() => {
     const headers = [
       "ID",
       "Sitio",
@@ -312,7 +269,7 @@ export function MapDashboard() {
       "Longitud",
       "Status",
       "Response Time",
-    ]
+    ];
     const csvContent = [
       headers.join(","),
       ...filteredSites.map((site) => {
@@ -326,33 +283,30 @@ export function MapDashboard() {
           site.coordenadas[1],
           `"${site.apiStatus}"`,
           site.responseTime || "N/A",
-        ].join(",")
+        ].join(",");
       }),
-    ].join("\n")
+    ].join("\n");
 
-    // Create a blob and download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `el_salvador_sites_${new Date().toISOString().split("T")[0]}.csv`)
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `el_salvador_sites_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [filteredSites]);
 
-  // Stats
-  const totalSites = sites.length
-  const upSites = sites.filter((site) => site.apiStatus === "UP").length
-  const pendingSites = sites.filter((site) => site.apiStatus === "PENDING").length
-  const noDataSites = sites.filter((site) => site.apiStatus === "DOWN").length
+  const totalSites = sites.length;
+  const upSites = sites.filter((site) => site.apiStatus === "UP").length;
+  const pendingSites = sites.filter((site) => site.apiStatus === "PENDING").length;
+  const noDataSites = sites.filter((site) => site.apiStatus === "DOWN").length;
   const avgResponseTime =
     sites
       .filter((site) => site.responseTime !== null && site.responseTime !== -1)
       .reduce((sum, site) => sum + (site.responseTime || 0), 0) /
-    sites.filter((site) => site.responseTime !== null && site.responseTime !== -1).length || 0
-
+    sites.filter((site) => site.responseTime !== null && site.responseTime !== -1).length || 0;
 
 
   return (
@@ -378,21 +332,20 @@ export function MapDashboard() {
             <Map
               sites={filteredSites}
               onMarkerClick={(site) => {
-                setSelectedSite(site)
-                setIsModalOpen(true)
+                setSelectedSite(site);
+                setIsModalOpen(true);
               }}
             />
           ) : (
             <SitesList
               sites={filteredSites}
               onSiteClick={(site) => {
-                setSelectedSite(site)
-                setIsModalOpen(true)
+                setSelectedSite(site);
+                setIsModalOpen(true);
               }}
             />
           )}
 
-          {/* API Connection Status */}
           {usingMockData && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] w-auto max-w-md">
               <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
@@ -405,7 +358,6 @@ export function MapDashboard() {
             </div>
           )}
 
-          {/* Stats panel */}
           <div className="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg z-[1000] flex flex-col gap-2 max-w-md">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg">Conectando El Salvador - Monitoreo</h2>
@@ -477,7 +429,6 @@ export function MapDashboard() {
               </Button>
             </div>
 
-            {/* Search */}
             <div className="relative mt-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -488,11 +439,77 @@ export function MapDashboard() {
               />
             </div>
 
-            {/* Filters */}
+            <div className="flex gap-2 mt-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 flex-1">
+                    <Filter className="h-4 w-4" />
+                    Departments ({selectedDepartments.length}/{departments.length})
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 max-h-[300px] overflow-y-auto">
+                  <DropdownMenuCheckboxItem
+                    checked={selectedDepartments.length === departments.length}
+                    onCheckedChange={selectAllDepartments}
+                  >
+                    Select All
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={selectedDepartments.length === 0}
+                    onCheckedChange={clearDepartmentSelection}
+                  >
+                    Clear All
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem disabled />
+                  {departments.map((dept) => (
+                    <DropdownMenuCheckboxItem
+                      key={dept}
+                      checked={selectedDepartments.includes(dept)}
+                      onCheckedChange={() => toggleDepartment(dept)}
+                    >
+                      {dept}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 flex-1">
+                    <Filter className="h-4 w-4" />
+                    Status ({statusFilter || "All"})
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter === null}
+                    onCheckedChange={() => setStatusFilter(null)}
+                  >
+                    All Statuses
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter === "UP"}
+                    onCheckedChange={() => setStatusFilter("UP")}
+                  >
+                    Up
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter === "PENDING"}
+                    onCheckedChange={() => setStatusFilter("PENDING")}
+                  >
+                    Pending
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter === "DOWN"}
+                    onCheckedChange={() => setStatusFilter("DOWN")}
+                  >
+                    Down
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          {/* Alerts container */}
           <div className="absolute top-4 right-4 flex flex-col gap-2 max-w-md z-[1000]">
             {alerts.map((site) => (
               <div
@@ -515,8 +532,8 @@ export function MapDashboard() {
                   size="icon"
                   className="h-6 w-6 rounded-full text-white hover:bg-black/20"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    removeAlert(site)
+                    e.stopPropagation();
+                    removeAlert(site);
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -526,10 +543,9 @@ export function MapDashboard() {
             ))}
           </div>
 
-          {/* Site details modal */}
           <SiteModal site={selectedSite} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </>
       )}
     </div>
-  )
+  );
 }

@@ -1,3 +1,4 @@
+// @/components/map.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -30,6 +31,7 @@ export default function Map({ sites, onMarkerClick }: MapProps) {
     })
   }
 
+  // Se crean los iconos una sola vez.
   const upIcon = createIcon("green")
   const pendingIcon = createIcon("yellow")
   const noDataIcon = createIcon("red")
@@ -37,7 +39,7 @@ export default function Map({ sites, onMarkerClick }: MapProps) {
   // Fix Leaflet default icon issue
   useEffect(() => {
     // Only run this once on the client
-    delete L.Icon.Default.prototype._getIconUrl
+    delete (L.Icon.Default.prototype as any)._getIconUrl // Add 'as any' to bypass TypeScript error if _getIconUrl is private/protected
 
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-icon-2x.png",
@@ -79,7 +81,7 @@ export default function Map({ sites, onMarkerClick }: MapProps) {
 
       {sites.map((site) => (
         <Marker
-          key={site.id}
+          key={`${site.id}-${site.apiStatus}`} // <--- CAMBIO CLAVE AQUÍ: AÑADE apiStatus a la key
           position={site.coordenadas}
           icon={getMarkerIcon(site.apiStatus)}
           eventHandlers={{
