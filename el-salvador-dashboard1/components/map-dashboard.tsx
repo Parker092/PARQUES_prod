@@ -141,91 +141,197 @@ export function MapDashboard() {
     setAlerts((prev) => prev.filter((alert) => alert.id !== site.id));
   }, []);
 
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log("Loading data from API, attempt:", retryCount + 1);
+  // const loadData = useCallback(async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     setError(null);
+  //     console.log("Loading data from API, attempt:", retryCount + 1);
 
-      const response = await fetch("/api/sites");
-      const isMockData = response.headers.get("X-Data-Source") === "mock";
-      const errorReason = response.headers.get("X-Error-Reason");
+  //     const response = await fetch("/api/sites");
+  //     const isMockData = response.headers.get("X-Data-Source") === "mock";
+  //     const errorReason = response.headers.get("X-Error-Reason");
 
-      const apiData = await response.json();
+  //     const apiData = await response.json();
 
-      if (apiData.length === 0 && !isMockData) {
-        setError("No data found from API. It might be down or return an empty response.");
-        setUsingMockData(false);
-        return;
-      }
+  //     if (apiData.length === 0 && !isMockData) {
+  //       setError("No data found from API. It might be down or return an empty response.");
+  //       setUsingMockData(false);
+  //       return;
+  //     }
 
-      const fetchedSites: Site[] = apiData.map((apiSite: any) => ({
+  //     const fetchedSites: Site[] = apiData.map((apiSite: any) => ({
+  //       id: apiSite.id,
+  //       sitio: apiSite.sitio,
+  //       departamento: normalizeDepartment(apiSite.departamento),
+  //       municipio: apiSite.municipio,
+  //       distrito: apiSite.distrito,
+  //       coordenadas: [Number.parseFloat(apiSite.latitud), Number.parseFloat(apiSite.longitud)] as [number, number],
+  //       url: "",
+  //       ip: "",
+  //       status: apiSite.status === "UP" ? 1 : apiSite.status === "PENDING" ? 0 : -1,
+  //       apiStatus: apiSite.status,
+  //       responseTime: apiSite.response_time,
+  //     }));
+
+  //     const validSites = fetchedSites.filter((site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1]));
+
+  //     console.log(`Loaded ${validSites.length} sites successfully`);
+  //     setSites(validSites);
+  //     setLastUpdated(new Date());
+  //     setUsingMockData(isMockData);
+  //     setApiConnected(!isMockData);
+
+  //     if (isMockData && errorReason) {
+  //       console.warn("Using mock data due to:", errorReason);
+  //     }
+
+  //     // Check for new down/Pending sites for alerts
+  //     setAlerts((prevAlerts) => {
+  //       const newProblemSites = validSites.filter(
+  //         (site) => (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") && !prevAlerts.some((alert) => alert.id === site.id),
+  //       );
+
+  //       if (newProblemSites.length > 0) {
+  //         newProblemSites.forEach((alertToAdd) => {
+  //           // Agregar la alerta y programar su eliminación
+  //           setTimeout(() => {
+  //             setAlerts((latestAlerts) => latestAlerts.filter((alert) => alert.id !== alertToAdd.id));
+  //           }, 5000);
+  //         });
+  //         // Retorna un nuevo array que incluye las alertas previas y las nuevas únicas
+  //         return [...prevAlerts, ...newProblemSites];
+  //       }
+  //       return prevAlerts; // Si no hay nuevas alertas, retorna el array sin cambios
+  //     });
+
+
+  //     // Extract unique departments for filtering
+  //     const uniqueDepartments = Array.from(new Set(validSites.map((site) => site.departamento)))
+  //       .filter(Boolean)
+  //       .sort();
+  //     setDepartments(uniqueDepartments);
+
+  //     // Solo establecer todos los departamentos inicialmente si NO se ha hecho ninguna selección previa
+  //     // Accede al ref para verificar la longitud actual de los departamentos seleccionados
+  //     if (selectedDepartmentsRef.current.length === 0 && uniqueDepartments.length > 0) {
+  //       setSelectedDepartments(uniqueDepartments);
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Failed to load data:", error);
+  //     setError("Failed to load data from API. Check Docker container status or API route response.");
+  //     setUsingMockData(true);
+  //     setApiConnected(false);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [retryCount]);
+
+const loadData = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    console.log("Loading data from API, attempt:", retryCount + 1);
+
+    const response = await fetch("/api/sites");
+    const isMockData = response.headers.get("X-Data-Source") === "mock";
+    const errorReason = response.headers.get("X-Error-Reason");
+
+    const apiData = await response.json();
+
+    if (apiData.length === 0 && !isMockData) {
+      setError("No data found from API. It might be down or return an empty response.");
+      setUsingMockData(false);
+      return;
+    }
+
+    // 🚫 Filtrar sitios con status === "NO_DATA"
+    const fetchedSites: Site[] = apiData
+      .filter((apiSite: any) => apiSite.status !== "NO_DATA")
+      .map((apiSite: any) => ({
         id: apiSite.id,
         sitio: apiSite.sitio,
         departamento: normalizeDepartment(apiSite.departamento),
         municipio: apiSite.municipio,
         distrito: apiSite.distrito,
-        coordenadas: [Number.parseFloat(apiSite.latitud), Number.parseFloat(apiSite.longitud)] as [number, number],
+        coordenadas: [
+          Number.parseFloat(apiSite.latitud),
+          Number.parseFloat(apiSite.longitud),
+        ] as [number, number],
         url: "",
         ip: "",
-        status: apiSite.status === "UP" ? 1 : apiSite.status === "PENDING" ? 0 : -1,
+        status:
+          apiSite.status === "UP"
+            ? 1
+            : apiSite.status === "PENDING"
+            ? 0
+            : -1,
         apiStatus: apiSite.status,
         responseTime: apiSite.response_time,
       }));
 
-      const validSites = fetchedSites.filter((site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1]));
+    const validSites = fetchedSites.filter(
+      (site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1])
+    );
 
-      console.log(`Loaded ${validSites.length} sites successfully`);
-      setSites(validSites);
-      setLastUpdated(new Date());
-      setUsingMockData(isMockData);
-      setApiConnected(!isMockData);
+    console.log(`Loaded ${validSites.length} sites successfully`);
+    setSites(validSites);
+    setLastUpdated(new Date());
+    setUsingMockData(isMockData);
+    setApiConnected(!isMockData);
 
-      if (isMockData && errorReason) {
-        console.warn("Using mock data due to:", errorReason);
-      }
-
-      // Check for new down/Pending sites for alerts
-      setAlerts((prevAlerts) => {
-        const newProblemSites = validSites.filter(
-          (site) => (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") && !prevAlerts.some((alert) => alert.id === site.id),
-        );
-
-        if (newProblemSites.length > 0) {
-          newProblemSites.forEach((alertToAdd) => {
-            // Agregar la alerta y programar su eliminación
-            setTimeout(() => {
-              setAlerts((latestAlerts) => latestAlerts.filter((alert) => alert.id !== alertToAdd.id));
-            }, 5000);
-          });
-          // Retorna un nuevo array que incluye las alertas previas y las nuevas únicas
-          return [...prevAlerts, ...newProblemSites];
-        }
-        return prevAlerts; // Si no hay nuevas alertas, retorna el array sin cambios
-      });
-
-
-      // Extract unique departments for filtering
-      const uniqueDepartments = Array.from(new Set(validSites.map((site) => site.departamento)))
-        .filter(Boolean)
-        .sort();
-      setDepartments(uniqueDepartments);
-
-      // Solo establecer todos los departamentos inicialmente si NO se ha hecho ninguna selección previa
-      // Accede al ref para verificar la longitud actual de los departamentos seleccionados
-      if (selectedDepartmentsRef.current.length === 0 && uniqueDepartments.length > 0) {
-        setSelectedDepartments(uniqueDepartments);
-      }
-
-    } catch (error) {
-      console.error("Failed to load data:", error);
-      setError("Failed to load data from API. Check Docker container status or API route response.");
-      setUsingMockData(true);
-      setApiConnected(false);
-    } finally {
-      setIsLoading(false);
+    if (isMockData && errorReason) {
+      console.warn("Using mock data due to:", errorReason);
     }
-  }, [retryCount]);
+
+    // Check for new DOWN or PENDING sites to alert
+    setAlerts((prevAlerts) => {
+      const newProblemSites = validSites.filter(
+        (site) =>
+          (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") &&
+          !prevAlerts.some((alert) => alert.id === site.id)
+      );
+
+      if (newProblemSites.length > 0) {
+        newProblemSites.forEach((alertToAdd) => {
+          setTimeout(() => {
+            setAlerts((latestAlerts) =>
+              latestAlerts.filter((alert) => alert.id !== alertToAdd.id)
+            );
+          }, 5000);
+        });
+        return [...prevAlerts, ...newProblemSites];
+      }
+      return prevAlerts;
+    });
+
+    // Extract and normalize departments
+    const uniqueDepartments = Array.from(
+      new Set(validSites.map((site) => site.departamento))
+    )
+      .filter(Boolean)
+      .sort();
+
+    setDepartments(uniqueDepartments);
+
+    if (
+      selectedDepartmentsRef.current.length === 0 &&
+      uniqueDepartments.length > 0
+    ) {
+      setSelectedDepartments(uniqueDepartments);
+    }
+  } catch (error) {
+    console.error("Failed to load data:", error);
+    setError(
+      "Failed to load data from API. Check Docker container status or API route response."
+    );
+    setUsingMockData(true);
+    setApiConnected(false);
+  } finally {
+    setIsLoading(false);
+  }
+}, [retryCount]);
+
   useEffect(() => {
     loadDataRef.current = loadData;
   }, [loadData]);
