@@ -143,112 +143,112 @@ export function MapDashboard() {
 
 
 
-const loadData = useCallback(async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
-    console.log("Loading data from API, attempt:", retryCount + 1);
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log("Loading data from API, attempt:", retryCount + 1);
 
-    const response = await fetch("/api/sites");
-    const isMockData = response.headers.get("X-Data-Source") === "mock";
-    const errorReason = response.headers.get("X-Error-Reason");
+      const response = await fetch("/api/sites");
+      const isMockData = response.headers.get("X-Data-Source") === "mock";
+      const errorReason = response.headers.get("X-Error-Reason");
 
-    const apiData = await response.json();
+      const apiData = await response.json();
 
-    if (apiData.length === 0 && !isMockData) {
-      setError("No data found from API. It might be down or return an empty response.");
-      setUsingMockData(false);
-      return;
-    }
+      if (apiData.length === 0 && !isMockData) {
+        setError("No data found from API. It might be down or return an empty response.");
+        setUsingMockData(false);
+        return;
+      }
 
-    // ✅ Filtrar solo sitios con status válidos: "UP", "DOWN", "PENDING"
-    const allowedStatuses = ["UP", "DOWN", "PENDING"];
-    const fetchedSites: Site[] = apiData
-      .filter((apiSite: any) => allowedStatuses.includes(apiSite.status))
-      .map((apiSite: any) => ({
-        id: apiSite.id,
-        sitio: apiSite.sitio,
-        departamento: normalizeDepartment(apiSite.departamento),
-        municipio: apiSite.municipio,
-        distrito: apiSite.distrito,
-        coordenadas: [
-          Number.parseFloat(apiSite.latitud),
-          Number.parseFloat(apiSite.longitud),
-        ] as [number, number],
-        url: "",
-        ip: "",
-        status:
-          apiSite.status === "UP"
-            ? 1
-            : apiSite.status === "PENDING"
-            ? 0
-            : -1,
-        apiStatus: apiSite.status,
-        responseTime: apiSite.response_time,
-      }));
+      // ✅ Filtrar solo sitios con status válidos: "UP", "DOWN", "PENDING"
+      const allowedStatuses = ["UP", "DOWN", "PENDING"];
+      const fetchedSites: Site[] = apiData
+        .filter((apiSite: any) => allowedStatuses.includes(apiSite.status))
+        .map((apiSite: any) => ({
+          id: apiSite.id,
+          sitio: apiSite.sitio,
+          departamento: normalizeDepartment(apiSite.departamento),
+          municipio: apiSite.municipio,
+          distrito: apiSite.distrito,
+          coordenadas: [
+            Number.parseFloat(apiSite.latitud),
+            Number.parseFloat(apiSite.longitud),
+          ] as [number, number],
+          url: "",
+          ip: "",
+          status:
+            apiSite.status === "UP"
+              ? 1
+              : apiSite.status === "PENDING"
+                ? 0
+                : -1,
+          apiStatus: apiSite.status,
+          responseTime: apiSite.response_time,
+        }));
 
-    // ✅ Validar coordenadas válidas
-    const validSites = fetchedSites.filter(
-      (site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1])
-    );
-
-    console.log(`Loaded ${validSites.length} valid sites (with UP, DOWN or PENDING)`);
-    setSites(validSites);
-    setLastUpdated(new Date());
-    setUsingMockData(isMockData);
-    setApiConnected(!isMockData);
-
-    if (isMockData && errorReason) {
-      console.warn("Using mock data due to:", errorReason);
-    }
-
-    // 🚨 Alertar DOWN y PENDING
-    setAlerts((prevAlerts) => {
-      const newProblemSites = validSites.filter(
-        (site) =>
-          (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") &&
-          !prevAlerts.some((alert) => alert.id === site.id)
+      // ✅ Validar coordenadas válidas
+      const validSites = fetchedSites.filter(
+        (site) => !isNaN(site.coordenadas[0]) && !isNaN(site.coordenadas[1])
       );
 
-      if (newProblemSites.length > 0) {
-        newProblemSites.forEach((alertToAdd) => {
-          setTimeout(() => {
-            setAlerts((latestAlerts) =>
-              latestAlerts.filter((alert) => alert.id !== alertToAdd.id)
-            );
-          }, 5000);
-        });
-        return [...prevAlerts, ...newProblemSites];
+      console.log(`Loaded ${validSites.length} valid sites (with UP, DOWN or PENDING)`);
+      setSites(validSites);
+      setLastUpdated(new Date());
+      setUsingMockData(isMockData);
+      setApiConnected(!isMockData);
+
+      if (isMockData && errorReason) {
+        console.warn("Using mock data due to:", errorReason);
       }
-      return prevAlerts;
-    });
 
-    // 📍 Agrupar departamentos
-    const uniqueDepartments = Array.from(
-      new Set(validSites.map((site) => site.departamento))
-    )
-      .filter(Boolean)
-      .sort();
+      // 🚨 Alertar DOWN y PENDING
+      setAlerts((prevAlerts) => {
+        const newProblemSites = validSites.filter(
+          (site) =>
+            (site.apiStatus === "DOWN" || site.apiStatus === "PENDING") &&
+            !prevAlerts.some((alert) => alert.id === site.id)
+        );
 
-    setDepartments(uniqueDepartments);
+        if (newProblemSites.length > 0) {
+          newProblemSites.forEach((alertToAdd) => {
+            setTimeout(() => {
+              setAlerts((latestAlerts) =>
+                latestAlerts.filter((alert) => alert.id !== alertToAdd.id)
+              );
+            }, 5000);
+          });
+          return [...prevAlerts, ...newProblemSites];
+        }
+        return prevAlerts;
+      });
 
-    if (
-      selectedDepartmentsRef.current.length === 0 &&
-      uniqueDepartments.length > 0
-    ) {
-      setSelectedDepartments(uniqueDepartments);
+      // 📍 Agrupar departamentos
+      const uniqueDepartments = Array.from(
+        new Set(validSites.map((site) => site.departamento))
+      )
+        .filter(Boolean)
+        .sort();
+
+      setDepartments(uniqueDepartments);
+
+      if (
+        selectedDepartmentsRef.current.length === 0 &&
+        uniqueDepartments.length > 0
+      ) {
+        setSelectedDepartments(uniqueDepartments);
+      }
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      setError(
+        "Failed to load data from API. Check Docker container status or API route response."
+      );
+      setUsingMockData(true);
+      setApiConnected(false);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to load data:", error);
-    setError(
-      "Failed to load data from API. Check Docker container status or API route response."
-    );
-    setUsingMockData(true);
-    setApiConnected(false);
-  } finally {
-    setIsLoading(false);
-  }
-}, [retryCount]);
+  }, [retryCount]);
 
 
 
@@ -480,7 +480,7 @@ const loadData = useCallback(async () => {
               <div>Last updated: {lastUpdated.toLocaleTimeString()}</div>
             </div>
 
-            <div className="flex gap-2 mt-1">
+            {/* <div className="flex gap-2 mt-1">
               <Button size="sm" variant="outline" className="flex-1" onClick={handleRefresh}>
                 <RefreshCw className="h-3 w-3 mr-2" />
                 Refresh
@@ -577,7 +577,7 @@ const loadData = useCallback(async () => {
               </DropdownMenu>
             </div>
 
-          </div>
+          </div> */}
 
           <div className="absolute top-4 right-4 flex flex-col gap-2 max-w-md z-[1000]">
             {alerts.map((site) => (
