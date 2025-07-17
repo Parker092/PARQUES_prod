@@ -247,7 +247,11 @@ const loadData = useCallback(async () => {
 
     // 🚫 Filtrar sitios con status === "NO_DATA"
     const fetchedSites: Site[] = apiData
-      .filter((apiSite: any) => apiSite.status !== "NO_DATA")
+      .filter(
+        (apiSite: any) =>
+          apiSite.status !== "NO_DATA" &&
+          apiSite.status !== "UNKNOWN"
+      )
       .map((apiSite: any) => ({
         id: apiSite.id,
         sitio: apiSite.sitio,
