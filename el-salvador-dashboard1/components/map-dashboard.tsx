@@ -489,9 +489,9 @@ export function MapDashboard() {
                 <Download className="h-3 w-3 mr-2" />
                 Export
               </Button>
-            </div>
+            </div> */}
 
-            <div className="relative mt-2">
+            {/* <div className="relative mt-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search sites..."
@@ -499,9 +499,9 @@ export function MapDashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </div> */}
 
-            <div className="flex gap-2 mt-2">
+            {/* <div className="flex gap-2 mt-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2 flex-1">
@@ -575,9 +575,9 @@ export function MapDashboard() {
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div> */}
 
-          </div> */}
+          </div>
 
           <div className="absolute top-4 right-4 flex flex-col gap-2 max-w-md z-[1000]">
             {alerts.map((site) => (
