@@ -8,7 +8,7 @@ const swaggerSpec = require("../src/swagger");
 // Configurar orígenes permitidos
 const allowedOrigins = [
   'http://frontend:3004',
-  'http://10.20.70.91:5173'
+  'http://10.20.70.91:3009'
 ];
 
 // Middleware de CORS
